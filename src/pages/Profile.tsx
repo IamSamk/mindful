@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import PageTransition from "../components/animations/PageTransition";
 import { motion } from "framer-motion";
 import {
-  UserRound,
+  User as UserRound,
   Moon,
   Bell,
   Shield,
