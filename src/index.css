@@ -1,0 +1,166 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 34 30% 97%; /* #faf5f0 (off-white) */
+    --foreground: 13 58% 27%; /* darker version of rust for text */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 13 58% 27%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 13 58% 27%;
+    
+    --primary: 13 58% 47%; /* #ae533c (rust) */
+    --primary-foreground: 34 30% 97%;
+    
+    --secondary: 31 41% 85%; /* #ebd9c7 (beige) */
+    --secondary-foreground: 13 58% 27%;
+    
+    --muted: 31 41% 90%;
+    --muted-foreground: 13 30% 45%;
+    
+    --accent: 31 41% 85%; /* #ebd9c7 (beige) */
+    --accent-foreground: 13 58% 27%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 34 30% 97%;
+    
+    --border: 31 41% 80%;
+    --input: 31 41% 80%;
+    --ring: 13 58% 47%;
+    
+    --radius: 0.75rem;
+    
+    /* Status bar height (iOS) */
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .dark {
+    --background: 13 58% 15%;
+    --foreground: 31 41% 90%;
+    
+    --card: 13 58% 20%;
+    --card-foreground: 31 41% 90%;
+    
+    --popover: 13 58% 20%;
+    --popover-foreground: 31 41% 90%;
+    
+    --primary: 13 58% 47%; /* #ae533c (rust) */
+    --primary-foreground: 31 41% 90%;
+    
+    --secondary: 13 20% 30%;
+    --secondary-foreground: 31 41% 90%;
+    
+    --muted: 13 20% 30%;
+    --muted-foreground: 13 10% 70%;
+    
+    --accent: 13 20% 30%;
+    --accent-foreground: 31 41% 90%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 31 41% 90%;
+    
+    --border: 13 20% 30%;
+    --input: 13 20% 30%;
+    --ring: 13 58% 60%;
+  }
+  
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  
+  html, body, #root {
+    @apply h-full w-full overflow-hidden;
+    position: fixed;
+  }
+  
+  input, textarea, button, select {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background transition-all;
+    -webkit-appearance: none;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 dark:bg-card/80 backdrop-blur-lg border border-white/20 dark:border-white/10 shadow-sm;
+  }
+  
+  .mobile-container {
+    @apply h-full w-full max-w-md mx-auto flex flex-col;
+    padding-top: var(--safe-area-inset-top, 0);
+    padding-bottom: var(--safe-area-inset-bottom, 0);
+  }
+  
+  .mobile-container-with-nav {
+    @apply h-full w-full max-w-md mx-auto flex flex-col pb-16;
+    padding-top: var(--safe-area-inset-top, 0);
+    padding-bottom: calc(var(--safe-area-inset-bottom, 0) + 4rem);
+  }
+  
+  .page-container {
+    @apply flex flex-col h-full w-full overflow-hidden;
+  }
+  
+  .page-content {
+    @apply flex-1 overflow-y-auto overflow-x-hidden px-4 py-6;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .hover-card {
+    @apply transition-all duration-300 active:scale-95;
+  }
+  
+  .nav-item {
+    @apply flex flex-col items-center justify-center text-xs font-medium transition-colors;
+  }
+  
+  .nav-item-active {
+    @apply text-primary;
+  }
+  
+  .nav-item-inactive {
+    @apply text-muted-foreground hover:text-foreground;
+  }
+  
+  /* For app install prompt */
+  .app-install-prompt {
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 flex flex-col gap-2;
+    z-index: 100;
+    padding-bottom: calc(var(--safe-area-inset-bottom, 0) + 1rem);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .safe-top {
+    padding-top: var(--safe-area-inset-top, 0);
+  }
+  
+  .safe-bottom {
+    padding-bottom: var(--safe-area-inset-bottom, 0);
+  }
+}

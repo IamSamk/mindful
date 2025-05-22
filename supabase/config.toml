@@ -1,0 +1,36 @@
+
+project_id = "lzcpwldubvdrvjkzwtva"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+shadow_port = 54320
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+
+[analytics]
+enabled = false
+
+[realtime]
+enabled = true
+
+[inbucket]
+enabled = true
+
+[functions]
+[functions.serve]
+enabled = true
