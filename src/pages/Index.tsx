@@ -1,5 +1,5 @@
-
 import React from "react";
+import { motion } from 'framer-motion';
 import PageTransition from "../components/animations/PageTransition";
 import MoodTracker from "../components/MoodTracker";
 import QuickActivities from "../components/QuickActivities";
@@ -7,6 +7,7 @@ import QuoteCard from "../components/QuoteCard";
 import { Progress } from "@/components/ui/progress";
 import { Award, Trophy, Activity } from "lucide-react";
 import TranslateText from "../components/TranslateText";
+import AIChatInterface from '@/components/AIChat/AIChatInterface';
 
 const Index: React.FC = () => {
   // Get time of day to personalize greeting
@@ -23,54 +24,15 @@ const Index: React.FC = () => {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <h1 className="text-3xl font-bold">
-            <TranslateText text={getTimeBasedGreeting()} />
-          </h1>
-        </div>
-
-        <MoodTracker />
-        
-        <QuickActivities />
-
-        <h2 className="text-lg font-semibold mb-4">
-          <TranslateText text="Your progress" />
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="glass-card p-4 rounded-xl flex items-center">
-            <Trophy className="w-8 h-8 text-yellow-500 mr-4" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
-                <TranslateText text="Day streak" />
-              </h3>
-              <p className="text-2xl font-bold">3</p>
-            </div>
-          </div>
-          
-          <div className="glass-card p-4 rounded-xl flex items-center">
-            <Activity className="w-8 h-8 text-blue-500 mr-4" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
-                <TranslateText text="Activities" />
-              </h3>
-              <p className="text-2xl font-bold">12</p>
-            </div>
-          </div>
-          
-          <div className="glass-card p-4 rounded-xl flex items-center">
-            <Award className="w-8 h-8 text-purple-500 mr-4" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
-                <TranslateText text="Badges" />
-              </h3>
-              <p className="text-2xl font-bold">5</p>
-            </div>
-          </div>
-        </div>
-        
-        <QuoteCard quote={quote} author={author} />
+      <div className="container mx-auto py-8 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-bold text-center mb-8">Welcome to Mindful</h1>
+          <AIChatInterface />
+        </motion.div>
       </div>
     </PageTransition>
   );

@@ -1,6 +1,6 @@
-
-import { supabase } from '../lib/supabase';
-import { LearningResource } from '../lib/supabase';
+import { supabase } from '../integrations/supabase/client';
+import type { Database } from '../integrations/supabase/types';
+type LearningResource = Database['public']['Tables']['learning_resources']['Row'];
 import { learningResources } from '../lib/data';
 
 export const getLearningResources = async (): Promise<{ data: LearningResource[] | null; error: any }> => {

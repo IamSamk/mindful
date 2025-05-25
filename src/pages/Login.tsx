@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import PageTransition from "../components/animations/PageTransition";
 import TranslateText from "../components/TranslateText";
+import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,37 +16,96 @@ const Login = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (isRegistering && password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     
     try {
       if (isRegistering) {
         const { error } = await signUp(email, password);
-        if (error) throw error;
-        toast({
-          title: "Registration successful",
-          description: "Please check your email to verify your account.",
-        });
+        if (error) {
+          if (error.message.includes('already registered')) {
+            toast({
+              title: "Registration Error",
+              description: "An account with this email already exists. Please sign in instead.",
+              variant: "destructive"
+            });
+            setIsRegistering(false);
+          } else {
+            throw error;
+          }
+        }
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
         navigate("/");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const authError = error as AuthError;
+      console.error('Authentication error:', authError);
+      
+      let errorMessage = "An error occurred during authentication";
+      
+      if (authError.message === "Invalid login credentials") {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (authError.message.includes("Email not confirmed")) {
+        errorMessage = "Please verify your email address before signing in.";
+      } else if (authError.message.includes("rate limit")) {
+        errorMessage = "Too many attempts. Please try again later.";
+      } else if (authError.message.includes("weak password")) {
+        errorMessage = "Password is too weak. Please use a stronger password.";
+      } else if (authError.message) {
+        errorMessage = authError.message;
+      }
+
       toast({
-        title: "Authentication error",
-        description: error.message || "An error occurred during authentication",
+        title: isRegistering ? "Registration Error" : "Sign In Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setErrors(prev => ({ ...prev, email: undefined }));
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    setErrors(prev => ({ ...prev, password: undefined }));
   };
 
   return (
@@ -73,12 +132,18 @@ const Login = () => {
                   id="email"
                   type="email"
                   placeholder="you@example.com"
-                  className="pl-10"
+                  className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  onChange={handleEmailChange}
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                 />
               </div>
+              {errors.email && (
+                <p id="email-error" className="text-sm text-red-500">
+                  {errors.email}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -91,15 +156,17 @@ const Login = () => {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10"
+                  className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+                  onChange={handlePasswordChange}
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -108,6 +175,16 @@ const Login = () => {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p id="password-error" className="text-sm text-red-500">
+                  {errors.password}
+                </p>
+              )}
+              {isRegistering && !errors.password && (
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 6 characters long
+                </p>
+              )}
             </div>
             
             <Button
@@ -136,7 +213,10 @@ const Login = () => {
             <button
               type="button"
               className="text-primary text-sm underline"
-              onClick={() => setIsRegistering(!isRegistering)}
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setErrors({});
+              }}
             >
               <TranslateText text={isRegistering ? "Already have an account? Sign in" : "Don't have an account? Create one"} />
             </button>
