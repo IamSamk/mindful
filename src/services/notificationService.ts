@@ -1,5 +1,5 @@
-
-import { supabase } from "../lib/supabase";
+import { prisma } from '../lib/prisma';
+import { authService } from './authService';
 import { toast } from "@/components/ui/use-toast";
 
 export type NotificationPayload = {
@@ -10,13 +10,13 @@ export type NotificationPayload = {
 
 export const sendNotification = async (notification: NotificationPayload): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: notification.userId,
+    const { error } = await prisma.notification.create({
+      data: {
+        userId: notification.userId,
         title: notification.title,
         message: notification.message
-      });
+      },
+    });
     
     if (error) {
       throw error;
@@ -42,11 +42,10 @@ export const sendNotificationToUser = async (
   try {
     // First, get the user ID from the email by querying the users table in public schema
     // instead of trying to access auth.users directly
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+    const { data: userData, error: userError } = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true }
+    });
     
     if (userError || !userData) {
       throw new Error("User not found");
@@ -67,4 +66,60 @@ export const sendNotificationToUser = async (
     });
     return false;
   }
+};
+
+export const notificationService = {
+  async createNotification(userId: string, title: string, message: string) {
+    try {
+      const notification = await prisma.notification.create({
+        data: {
+          userId,
+          title,
+          message,
+        },
+      });
+      return { data: notification, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async getNotifications(userId: string, limit = 20) {
+    try {
+      const notifications = await prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+      return { data: notifications, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async markAsRead(notificationId: string) {
+    try {
+      const notification = await prisma.notification.update({
+        where: { id: notificationId },
+        data: { read: true },
+      });
+      return { data: notification, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async getUnreadCount(userId: string) {
+    try {
+      const count = await prisma.notification.count({
+        where: {
+          userId,
+          read: false,
+        },
+      });
+      return { data: count, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
 };

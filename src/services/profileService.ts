@@ -1,5 +1,5 @@
-
-import { supabase } from "../lib/supabase";
+import { prisma } from '../lib/prisma';
+import { authService } from './authService';
 import { toast } from "@/components/ui/use-toast";
 
 export type UserProfile = {
@@ -29,23 +29,15 @@ export type Notification = {
 
 export const getUserProfile = async (): Promise<UserProfile | null> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await prisma.user.findUnique({
+      where: { id: authService.getCurrentUserId() },
+    });
     
-    if (!userData.user) {
+    if (!userData) {
       throw new Error("User not authenticated");
     }
     
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userData.user.id)
-      .maybeSingle();
-    
-    if (error) {
-      throw error;
-    }
-    
-    return data;
+    return userData;
   } catch (error) {
     console.error("Error fetching user profile:", error);
     toast({
@@ -59,19 +51,13 @@ export const getUserProfile = async (): Promise<UserProfile | null> => {
 
 export const updateUserProfile = async (profile: Partial<UserProfile>): Promise<boolean> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await prisma.user.update({
+      where: { id: authService.getCurrentUserId() },
+      data: profile,
+    });
     
-    if (!userData.user) {
+    if (!userData) {
       throw new Error("User not authenticated");
-    }
-    
-    const { error } = await supabase
-      .from('user_profiles')
-      .update(profile)
-      .eq('id', userData.user.id);
-    
-    if (error) {
-      throw error;
     }
     
     toast({
@@ -93,12 +79,15 @@ export const updateUserProfile = async (profile: Partial<UserProfile>): Promise<
 
 export const changePassword = async (newPassword: string): Promise<boolean> => {
   try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
+    const { data: userData } = await prisma.user.update({
+      where: { id: authService.getCurrentUserId() },
+      data: {
+        password: newPassword
+      },
     });
     
-    if (error) {
-      throw error;
+    if (!userData) {
+      throw new Error("User not authenticated");
     }
     
     toast({
@@ -120,17 +109,22 @@ export const changePassword = async (newPassword: string): Promise<boolean> => {
 
 export const getNotifications = async (): Promise<Notification[]> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await prisma.user.findUnique({
+      where: { id: authService.getCurrentUserId() },
+    });
     
-    if (!userData.user) {
+    if (!userData) {
       return [];
     }
     
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userData.user.id)
-      .order('created_at', { ascending: false });
+    const { data, error } = await prisma.notification.findMany({
+      where: {
+        userId: userData.id,
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
     
     if (error) {
       throw error;
@@ -150,10 +144,18 @@ export const getNotifications = async (): Promise<Notification[]> => {
 
 export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
+    const { data: userData } = await prisma.user.findUnique({
+      where: { id: authService.getCurrentUserId() },
+    });
+    
+    if (!userData) {
+      throw new Error("User not authenticated");
+    }
+    
+    const { error } = await prisma.notification.update({
+      where: { id: notificationId },
+      data: { is_read: true },
+    });
     
     if (error) {
       throw error;
@@ -168,17 +170,23 @@ export const markNotificationAsRead = async (notificationId: string): Promise<bo
 
 export const getUnreadNotificationsCount = async (): Promise<number> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await prisma.user.findUnique({
+      where: { id: authService.getCurrentUserId() },
+    });
     
-    if (!userData.user) {
+    if (!userData) {
       return 0;
     }
     
-    const { data, error, count } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userData.user.id)
-      .eq('is_read', false);
+    const { data, error, count } = await prisma.notification.findMany({
+      where: {
+        userId: userData.id,
+        is_read: false,
+      },
+      select: {
+        id: true,
+      },
+    });
     
     if (error) {
       throw error;
@@ -189,4 +197,66 @@ export const getUnreadNotificationsCount = async (): Promise<number> => {
     console.error("Error fetching unread notifications count:", error);
     return 0;
   }
+};
+
+export const profileService = {
+  async getProfile(userId: string) {
+    try {
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+      });
+      return { data: profile, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async updateProfile(userId: string, updates: any) {
+    try {
+      const profile = await prisma.profile.upsert({
+        where: { userId },
+        update: updates,
+        create: {
+          userId,
+          ...updates,
+        },
+      });
+      return { data: profile, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async updateUserProfile(userId: string, updates: any) {
+    try {
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: updates,
+      });
+      return { data: user, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  async getProfileStats(userId: string) {
+    try {
+      const [moods, surveys, notifications] = await Promise.all([
+        prisma.mood.count({ where: { userId } }),
+        prisma.survey.count({ where: { userId } }),
+        prisma.notification.count({ where: { userId } }),
+      ]);
+
+      return {
+        data: {
+          moods,
+          surveys,
+          notifications,
+        },
+        error: null,
+      };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
 };
