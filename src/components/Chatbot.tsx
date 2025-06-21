@@ -1,15 +1,14 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendMessage, loadChatHistory, Message } from "../services/chatService";
+import { sendChatMessage, getChatHistory, ChatMessage } from "../services/chatService";
 import { useAuth } from "../contexts/AuthContext";
 import { MessageCircle, Send, Loader2, Brain } from "lucide-react";
 import TranslateText from "./TranslateText";
 import { toast } from "@/components/ui/use-toast";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -20,15 +19,17 @@ const Chatbot = () => {
       if (user) {
         setIsLoading(true);
         try {
-          const history = await loadChatHistory();
+          const history = await getChatHistory(user.id);
           if (history.length > 0) {
             setMessages(history);
           } else {
             // Add welcome message if there is no chat history
             setMessages([
               {
+                id: 'welcome',
                 role: "assistant",
-                content: "Hello! I'm here to listen and support you. How are you feeling today?"
+                content: "Hello! I'm here to listen and support you. How are you feeling today?",
+                timestamp: new Date()
               }
             ]);
           }
@@ -46,8 +47,10 @@ const Chatbot = () => {
         // Clear messages if user logs out
         setMessages([
           {
+            id: 'signin-required',
             role: "assistant",
-            content: "Please sign in to use the chat feature."
+            content: "Please sign in to use the chat feature.",
+            timestamp: new Date()
           }
         ]);
       }
@@ -82,22 +85,35 @@ const Chatbot = () => {
     setInput("");
     
     // Add user message to the chat immediately
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: userMessage }
-    ]);
+    const newUserMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: userMessage,
+      timestamp: new Date()
+    };
+    
+    setMessages((prev) => [...prev, newUserMessage]);
     
     setIsLoading(true);
     
     try {
-      const response = await sendMessage(userMessage, messages);
+      const response = await sendChatMessage(userMessage, user.id, {
+        previousMessages: messages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+      });
       
       if (response) {
         // Add AI response to the chat
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: response }
-        ]);
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: response.message,
+          timestamp: new Date()
+        };
+        
+        setMessages((prev) => [...prev, aiMessage]);
       }
     } catch (error) {
       console.error("Error in chat:", error);
@@ -122,9 +138,9 @@ const Chatbot = () => {
       
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4">
-          {messages.map((msg, index) => (
+          {messages.map((msg) => (
             <div
-              key={index}
+              key={msg.id}
               className={`flex ${
                 msg.role === "user" ? "justify-end" : "justify-start"
               }`}

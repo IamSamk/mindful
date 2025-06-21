@@ -7,7 +7,8 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Mic } from 'lucide-react';
 import { processUserMessage } from '@/services/ai';
-import { supabase } from '@/integrations/supabase/client';
+import { profileService } from '@/services/profileService';
+import { moodService } from '@/services/moodService';
 
 interface Message {
   id: string;
@@ -23,7 +24,6 @@ const AIChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -32,7 +32,6 @@ const AIChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Initial greeting when component mounts
   useEffect(() => {
     if (user && messages.length === 0) {
       const initialGreeting: Message = {
@@ -71,33 +70,21 @@ const AIChatInterface = () => {
         }
       );
 
-      // Handle AI response actions
       if (response.action) {
         switch (response.action.type) {
           case 'update_profile':
-            await supabase
-              .from('user_profiles')
-              .upsert({
-                id: user.id,
-                ...response.action.data,
-                updated_at: new Date().toISOString()
-              });
+            await profileService.updateUserProfile(response.action.data);
+            console.log('Profile updated via mock service');
             break;
           case 'log_mood':
-            await supabase
-              .from('moods')
-              .insert({
-                user_id: user.id,
-                ...response.action.data,
-                created_at: new Date().toISOString()
-              });
+            await moodService.logMood(user.id, response.action.data.value, response.action.data.note);
+            console.log('Mood logged via mock service');
             break;
-          // Add more action handlers as needed
         }
       }
 
       const assistantMessage: Message = {
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.message,
         timestamp: new Date(),
@@ -180,4 +167,4 @@ const AIChatInterface = () => {
   );
 };
 
-export default AIChatInterface; 
+export default AIChatInterface;

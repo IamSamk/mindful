@@ -1,11 +1,9 @@
-
 import React, { useState } from "react";
 import PageTransition from "../components/animations/PageTransition";
 import { BookOpen, Search, Clock, Tag } from "lucide-react";
 import { motion } from "framer-motion";
 import TranslateText from "../components/TranslateText";
-import { getLearningResources } from "../services/learningService";
-import { LearningResource } from "../lib/supabase";
+import { getLearningResources, LearningResource } from "../services/learningService";
 import { useQuery } from "@tanstack/react-query";
 import LearningResourceDetail from "../components/LearningResourceDetail";
 

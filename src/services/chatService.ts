@@ -1,98 +1,76 @@
-
-import { supabase } from "../integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
-
-export type Message = {
-  role: 'user' | 'assistant';
+// Mock chat service - replace with actual API calls when backend is ready
+export interface ChatMessage {
+  id: string;
+  role: 'assistant' | 'user';
   content: string;
+  timestamp: Date;
 }
 
-export const sendMessage = async (message: string, messages: Message[]): Promise<string | null> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
-    
-    if (!userId) {
-      console.error("User is not authenticated");
-      toast({
-        title: "Authentication required",
-        description: "Please login to use the chat feature",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
-    // Format messages for the Gemini API
-    const formattedMessages = messages.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
-    
-    // Add the new user message
-    formattedMessages.push({
-      role: 'user',
-      content: message
-    });
-    
-    console.log("Sending message to Gemini API:", formattedMessages);
-    
-    // Call our edge function
-    const { data, error } = await supabase.functions.invoke('gemini-chat', {
-      body: {
-        messages: formattedMessages,
-        userId
-      }
-    });
-    
-    if (error) {
-      console.error("Error calling gemini-chat function:", error);
-      throw new Error(error.message || "Failed to get a response");
-    }
-    
-    console.log("Received response from Gemini API:", data);
-    return data.response;
-  } catch (error) {
-    console.error("Error sending message:", error);
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to send message",
-      variant: "destructive"
-    });
-    return null;
+export interface ChatResponse {
+  message: string;
+  action?: {
+    type: string;
+    data: any;
+  };
+}
+
+export const sendChatMessage = async (
+  message: string,
+  userId: string,
+  context: {
+    previousMessages: Array<{ role: 'assistant' | 'user'; content: string }>;
   }
+): Promise<ChatResponse> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Mock response - replace with actual AI integration
+  const lowercaseMessage = message.toLowerCase();
+  
+  if (lowercaseMessage.includes('hello') || lowercaseMessage.includes('hi')) {
+    return {
+      message: "Hello! I'm here to support you. How are you feeling today?",
+      action: {
+        type: 'greeting',
+        data: { timestamp: new Date() }
+      }
+    };
+  }
+  
+  if (lowercaseMessage.includes('help') || lowercaseMessage.includes('support')) {
+    return {
+      message: "I'm here to help! You can ask me about stress management, mindfulness techniques, or just chat about how you're feeling.",
+      action: {
+        type: 'support_offered',
+        data: { topics: ['stress', 'mindfulness', 'mood'] }
+      }
+    };
+  }
+  
+  return {
+    message: "Thank you for sharing that with me. I'm here to listen and support you. Is there anything specific you'd like to talk about?",
+    action: {
+      type: 'general_response',
+      data: { messageType: 'supportive' }
+    }
+  };
 };
 
-export const loadChatHistory = async (): Promise<Message[]> => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
-    
-    if (!userId) {
-      return [];
-    }
-    
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
-    
-    if (error) {
-      throw error;
-    }
-    
-    // Convert from database format to Message format
-    return data.map(msg => ({
-      role: msg.is_from_user ? 'user' : 'assistant',
-      content: msg.content
-    }));
-  } catch (error) {
-    console.error("Error loading chat history:", error);
-    toast({
-      title: "Error",
-      description: "Failed to load chat history",
-      variant: "destructive"
-    });
-    return [];
-  }
+export const getChatHistory = async (userId: string): Promise<ChatMessage[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Return empty history for now - replace with actual database query
+  return [];
+};
+
+export const saveChatMessage = async (
+  userId: string,
+  message: ChatMessage
+): Promise<void> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  // Mock save - replace with actual database save
+  console.log('Saving chat message:', { userId, message });
 };

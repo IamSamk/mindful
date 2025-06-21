@@ -1,65 +1,25 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../integrations/supabase/client';
-import { toast } from '../components/ui/use-toast';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleEmailConfirmation = async () => {
-      try {
-        // Get the URL parameters
-        const params = new URLSearchParams(window.location.search);
-        const error = params.get('error');
-        const errorDescription = params.get('error_description');
-
-        if (error) {
-          // If there's an error, show it to the user
-          toast({
-            title: "Verification Error",
-            description: errorDescription || "Failed to verify email. Please try again or request a new verification link.",
-            variant: "destructive"
-          });
-          navigate('/login');
-          return;
-        }
-
-        // Get the current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
-
-        if (session) {
-          toast({
-            title: "Email Verified",
-            description: "Your email has been verified successfully. You can now sign in.",
-          });
-        }
-
-        // Redirect to login page
-        navigate('/login');
-      } catch (error) {
-        console.error('Error in email confirmation:', error);
-        toast({
-          title: "Verification Error",
-          description: "An error occurred during email verification. Please try again.",
-          variant: "destructive"
-        });
-        navigate('/login');
-      }
-    };
-
-    handleEmailConfirmation();
+    // Simple redirect to home page
+    // In a real implementation, you would handle OAuth callback here
+    navigate('/', { replace: true });
   }, [navigate]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center h-screen">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold mb-2">Verifying your email...</h2>
-        <p className="text-muted-foreground">Please wait while we confirm your email address.</p>
+        <div className="animate-spin h-8 w-8 text-primary mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <p className="text-muted-foreground">Completing authentication...</p>
       </div>
     </div>
   );

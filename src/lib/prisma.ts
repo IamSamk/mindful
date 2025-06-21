@@ -4,8 +4,13 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+// Only create Prisma client on server-side
+const isServer = typeof window === 'undefined';
 
-if (process.env.NODE_ENV !== 'production') {
+export const prisma = isServer 
+  ? (globalForPrisma.prisma ?? new PrismaClient())
+  : null;
+
+if (process.env.NODE_ENV !== 'production' && isServer) {
   globalForPrisma.prisma = prisma;
 } 

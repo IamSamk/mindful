@@ -33,7 +33,8 @@ yarn-error.log*
 
 # Prisma
 prisma/*.db
-prisma/migrations/
+# Migration files should be committed to version control
+# prisma/migrations/
 
 # Logs
 logs

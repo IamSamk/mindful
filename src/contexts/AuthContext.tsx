@@ -22,24 +22,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log("AuthProvider: Component rendering/re-rendering. State:", { loading, user: !!user });
+
   useEffect(() => {
+    console.log("AuthProvider: useEffect triggered to check user.");
     checkUser();
   }, []);
 
   const checkUser = async () => {
+    console.log("AuthProvider.checkUser: Starting user check.");
     try {
       const token = localStorage.getItem('auth_token');
+      console.log("AuthProvider.checkUser: Token from localStorage:", token ? 'found' : 'not found');
       if (token) {
         const { userId } = authService.verifyToken(token);
+        console.log("AuthProvider.checkUser: Token verified, userId:", userId);
         const userData = await authService.getCurrentUser(userId);
+        console.log("AuthProvider.checkUser: Fetched user data:", userData);
         if (userData) {
-          setUser(userData);
+          setUser(userData as User);
         }
       }
     } catch (error) {
-      console.error('Error checking user:', error);
+      console.error('AuthProvider.checkUser: Error during user check.', error);
       localStorage.removeItem('auth_token');
     } finally {
+      console.log("AuthProvider.checkUser: Finished user check, setting loading to false.");
       setLoading(false);
     }
   };

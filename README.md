@@ -15,24 +15,38 @@ A React Native application designed to support Bengaluru police officers' mental
 
 - Node.js (v18 or higher)
 - npm or yarn
+- PostgreSQL database
 - Local LLM server running (see [LLM Setup](#llm-setup))
 
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/your-org/mindful-mcapp.git
 cd mindful-mcapp
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 # or
 yarn install
 ```
 
-3. Start the development server:
+3. Set up the database:
+
+```bash
+# Generate Prisma client
+npm run prisma:generate
+
+# Run database migrations
+npm run prisma:migrate
+```
+
+4. Start the development server:
+
 ```bash
 npm run dev
 # or
@@ -55,8 +69,8 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 VITE_API_URL=http://localhost:8000
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+DATABASE_URL=postgresql://username:password@localhost:5432/mindful_db
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 ```
 
 ## Project Structure

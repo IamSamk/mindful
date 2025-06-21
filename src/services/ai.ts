@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { prisma } from '@/lib/prisma';
 
 interface AIResponse {
   message: string;
@@ -8,6 +8,8 @@ interface AIResponse {
   };
 }
 
+// This function now simulates a backend call and AI logic.
+// It does not and should not access the database directly.
 export const processUserMessage = async (
   message: string,
   userId: string,
@@ -15,93 +17,64 @@ export const processUserMessage = async (
     previousMessages: Array<{ role: 'assistant' | 'user'; content: string }>;
   }
 ): Promise<AIResponse> => {
-  try {
-    // TODO: Replace with your actual LLM API call
-    // For now, we'll use a simple rule-based response system
-    const lowercaseMessage = message.toLowerCase();
-    
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+  console.log("Processing message through mock AI service:", { message, userId });
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Initial conversation flow
-    if (!profile?.full_name || !profile?.bio) {
-      if (lowercaseMessage.includes('hi') || lowercaseMessage.includes('hello')) {
-        return {
-          message: "Hi! I'd love to get to know you better. What's your name?",
-          action: {
-            type: 'update_profile',
-            data: { needsName: true }
-          }
-        };
-      }
+  const lowercaseMessage = message.toLowerCase();
 
-      if (context.previousMessages.some(m => m.content.includes("What's your name?"))) {
-        return {
-          message: `Nice to meet you! How would you describe yourself in a few words?`,
-          action: {
-            type: 'update_profile',
-            data: { full_name: message }
-          }
-        };
-      }
+  // In a real app, you would fetch the user's profile via an API call.
+  // We'll mock the check here.
+  const hasProfile = context.previousMessages.some(m => m.content.includes("Nice to meet you"));
 
-      if (context.previousMessages.some(m => m.content.includes('describe yourself'))) {
-        return {
-          message: "Thank you for sharing! How are you feeling today?",
-          action: {
-            type: 'update_profile',
-            data: { bio: message }
-          }
-        };
-      }
-    }
-
-    // Mood tracking
-    if (
-      lowercaseMessage.includes('feel') ||
-      lowercaseMessage.includes('feeling') ||
-      lowercaseMessage.includes('mood')
-    ) {
-      let moodType = 'neutral';
-      let intensity = 3;
-
-      if (lowercaseMessage.includes('happy') || lowercaseMessage.includes('good')) {
-        moodType = 'positive';
-        intensity = 4;
-      } else if (lowercaseMessage.includes('sad') || lowercaseMessage.includes('bad')) {
-        moodType = 'negative';
-        intensity = 2;
-      }
-
+  // Initial conversation flow
+  if (!hasProfile) {
+    if (lowercaseMessage.includes('hi') || lowercaseMessage.includes('hello')) {
       return {
-        message: `I understand you're feeling ${moodType}. Would you like to explore some activities that might help enhance your mood?`,
-        action: {
-          type: 'log_mood',
-          data: { moodType, intensity, notes: message }
-        }
+        message: "Hi! I'd love to get to know you better. What should I call you?",
       };
     }
 
-    // Default response with activity suggestion
-    return {
-      message: "I'm here to support you. Would you like to try a quick mindfulness exercise?",
-      action: {
-        type: 'suggest_activity',
-        data: {
-          activity: 'breathing_exercise',
-          duration: '5min'
+    if (context.previousMessages.some(m => m.content.includes("What should I call you?"))) {
+      // The user is providing their name.
+      return {
+        message: `Nice to meet you, ${message}! How are you feeling today?`,
+        action: {
+          type: 'update_profile', // The component will handle calling the API to update the profile
+          data: { name: message }
         }
+      };
+    }
+  }
+
+  // Mood tracking
+  if (
+    lowercaseMessage.includes('feel') ||
+    lowercaseMessage.includes('feeling') ||
+    lowercaseMessage.includes('mood')
+  ) {
+    let moodType = 'neutral';
+    let intensity = 3;
+
+    if (lowercaseMessage.includes('happy') || lowercaseMessage.includes('good')) {
+      moodType = 'positive';
+      intensity = 4;
+    } else if (lowercaseMessage.includes('sad') || lowercaseMessage.includes('bad')) {
+      moodType = 'negative';
+      intensity = 2;
+    }
+
+    return {
+      message: `I understand you're feeling ${moodType}. Thanks for sharing. Would you like to try an activity?`,
+      action: {
+        type: 'log_mood', // The component will handle calling the API to log the mood
+        data: { value: intensity, note: message }
       }
     };
-
-  } catch (error) {
-    console.error('Error processing message:', error);
-    return {
-      message: "I apologize, but I'm having trouble processing your message. Could you try rephrasing that?"
-    };
   }
+
+  // Default response
+  return {
+    message: "That's interesting. Tell me more.",
+  };
 }; 

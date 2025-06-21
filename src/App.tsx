@@ -16,6 +16,8 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import AuthCallback from './pages/AuthCallback';
 
+console.log("App.tsx: Script start");
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -28,11 +30,10 @@ const queryClient = new QueryClient({
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
-  // For development purposes, if there's no Supabase config, treat as authenticated
-  const isDemoMode = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
+  console.log("ProtectedRoute: State", { user, loading });
   
   if (loading) {
+    console.log("ProtectedRoute: Render loading state");
     return <div className="flex items-center justify-center h-screen">
       <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -41,16 +42,19 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     </div>;
   }
   
-  if (!user && !isDemoMode) {
+  if (!user) {
+    console.log("ProtectedRoute: User not found, redirecting to /login");
     return <Navigate to="/login" replace />;
   }
   
+  console.log("ProtectedRoute: Rendering children");
   return <>{children}</>;
 };
 
 // App content with routes
 const AppContent = () => {
   const location = useLocation();
+  console.log("AppContent: Rendering for location", location.pathname);
 
   useEffect(() => {
     // Check if user prefers dark mode
@@ -92,20 +96,24 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </TooltipProvider>
-      </LanguageProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log("App: Component rendering");
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </TooltipProvider>
+        </LanguageProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
+console.log("App.tsx: Script end");
 export default App;

@@ -11,17 +11,27 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String
-  name          String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  profile       Profile?
-  moods         Mood[]
-  surveys       Survey[]
-  notifications Notification[]
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  password       String // Hashed password
+  role           Role      @default(USER)
+
+  // Police Officer specific fields
+  designation    String?
+  dateOfBirth    DateTime?
+  gender         String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  profile        Profile?
+
+  moodEntries    MoodEntry[]
+  surveyAnswers  SurveyAnswer[]
+  chatSessions   ChatSession[]
   learningProgress LearningProgress[]
+  notifications  Notification[]
 }
 
 model Profile {
@@ -35,43 +45,83 @@ model Profile {
   updatedAt     DateTime  @updatedAt
 }
 
-model Mood {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id])
-  value         Int
-  note          String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model MoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  mood      String
+  notes     String?
+  createdAt DateTime @default(now())
 }
 
 model Survey {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id])
-  responses     Json
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  title     String
+  questions Json
+  createdAt DateTime @default(now())
 }
 
-model Notification {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id])
-  title         String
-  message       String
-  read          Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model SurveyAnswer {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  surveyId  String
+  answers   Json
+  createdAt DateTime @default(now())
+}
+
+model ChatSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id          String      @id @default(cuid())
+  sessionId   String
+  session     ChatSession @relation(fields: [sessionId], references: [id])
+  sender      String // "user" or "ai"
+  message     String
+  timestamp   DateTime    @default(now())
+}
+
+model LearningResource {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String // "article", "video", "activity"
+  content     String
+  url         String?
+  createdAt   DateTime @default(now())
+  progress    LearningProgress[]
 }
 
 model LearningProgress {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id])
-  resourceId    String
-  completed     Boolean   @default(false)
-  progress      Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  resourceId String
+  resource   LearningResource @relation(fields: [resourceId], references: [id])
+  completed  Boolean  @default(false)
+  progress   Float    @default(0) // e.g., percentage for videos
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+  POLICE_OFFICER
 } 

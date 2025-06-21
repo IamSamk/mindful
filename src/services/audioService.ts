@@ -1,22 +1,24 @@
-
-import { supabase } from '../integrations/supabase/client';
+// Mock audio service - replace with actual TTS API when ready
+export const textToSpeech = async (text: string): Promise<string | null> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Mock response - replace with actual TTS service
+  console.log('Converting text to speech:', text);
+  
+  // Return a mock audio URL - in real implementation, this would be the TTS service response
+  return null;
+};
 
 export const generateSpeech = async (text: string, voice = 'alloy'): Promise<string> => {
-  try {
-    const { data, error } = await supabase.functions.invoke('text-to-speech', {
-      body: { text, voice },
-    });
-
-    if (error) {
-      console.error('Error generating speech:', error);
-      throw new Error(error.message);
-    }
-
-    return data.audioContent; // Base64 encoded audio
-  } catch (error) {
-    console.error('Error in generateSpeech:', error);
-    throw error;
-  }
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Mock response - replace with actual speech generation service
+  console.log('Generating speech for text:', text, 'with voice:', voice);
+  
+  // Return a mock audio URL
+  return `https://example.com/audio/${Date.now()}.mp3`;
 };
 
 export const playAudio = (base64Audio: string): HTMLAudioElement => {

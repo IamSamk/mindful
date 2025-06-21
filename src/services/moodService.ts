@@ -1,56 +1,39 @@
-import { prisma } from '../lib/prisma';
-import { authService } from './authService';
+// This is a mock service. In a real application, these functions would
+// make API calls to your backend server, which would then interact with the database.
 
 export const moodService = {
-  async addMood(userId: string, value: number, note?: string) {
-    try {
-      const mood = await prisma.mood.create({
-        data: {
-          userId,
-          value,
-          note,
-        },
-      });
-      return { data: mood, error: null };
-    } catch (error) {
-      return { data: null, error };
-    }
+  async logMood(userId: string, value: number, note?: string) {
+    console.log(`MOCK API: Logging mood for user ${userId}`, { value, note });
+    // On the server, this would be:
+    // return prisma.mood.create({ data: { userId, value, note } });
+    return {
+      data: { id: 'mock-mood-id', userId, value, note },
+      error: null
+    };
   },
 
   async getMoods(userId: string, limit = 30) {
-    try {
-      const moods = await prisma.mood.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-      });
-      return { data: moods, error: null };
-    } catch (error) {
-      return { data: null, error };
-    }
+    console.log(`MOCK API: Getting ${limit} moods for user ${userId}`);
+    // On the server, this would be:
+    // return prisma.mood.findMany({ where: { userId }, take: limit });
+    return {
+        data: [
+            { id: '1', value: 4, note: 'Feeling great today!', createdAt: new Date() },
+            { id: '2', value: 2, note: 'A bit stressed.', createdAt: new Date() },
+        ],
+        error: null
+    };
   },
 
   async getMoodStats(userId: string) {
-    try {
-      const moods = await prisma.mood.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: 30,
-      });
-
-      const average = moods.reduce((acc, mood) => acc + mood.value, 0) / moods.length;
-      const recentMood = moods[0]?.value || 0;
-
-      return {
-        data: {
-          average,
-          recentMood,
-          total: moods.length,
-        },
-        error: null,
-      };
-    } catch (error) {
-      return { data: null, error };
-    }
+    console.log(`MOCK API: Getting mood stats for user ${userId}`);
+    return {
+      data: {
+        average: 3.5,
+        recentMood: 4,
+        total: 30,
+      },
+      error: null,
+    };
   },
 };

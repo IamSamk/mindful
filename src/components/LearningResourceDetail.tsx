@@ -1,9 +1,8 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, Clock, Tag } from "lucide-react";
-import { LearningResource } from "../lib/supabase";
-import { Button } from "./ui/button";
+import { LearningResource } from "../services/learningService";
+import { Button } from "@/components/ui/button";
 import TranslateText from "./TranslateText";
 
 interface LearningResourceDetailProps {
